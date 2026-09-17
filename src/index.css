@@ -1,1 +1,23 @@
 @import "tailwindcss";
+@plugin "daisyui";
+.tiptap h1 {
+  font-size: 35px;
+  font-weight: bold;
+}
+.tiptap h2 {
+  font-size: 25px;
+  font-weight: bold;
+  color: brown;
+}
+.tiptap h3 {
+  font-size: 20px;
+  font-weight: bold;
+}
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 20px;
+}
