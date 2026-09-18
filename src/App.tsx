@@ -1,7 +1,9 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { useRef } from "react";
 
 const App = () => {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editor = useEditor({
     extensions: [StarterKit],
     content: `Aucune note`,
@@ -35,25 +37,27 @@ const App = () => {
     },
 
     onUpdate: ({ editor }) => {
-      const request = indexedDB.open("CosyNoteDB", 1);
+      clearTimeout(timer.current!);
 
-      request.onsuccess = () => {
-        const db = request.result;
+      timer.current = setTimeout(() => {
+        const request = indexedDB.open("CosyNoteDB", 1);
 
-        const transaction = db.transaction("notes", "readwrite");
+        request.onsuccess = () => {
+          const db = request.result;
+          const transaction = db.transaction("notes", "readwrite");
+          const store = transaction.objectStore("notes");
 
-        const store = transaction.objectStore("notes");
+          const note = {
+            title: "Ma première note",
+            content: editor.getJSON(),
+            updatedAt: new Date(),
+          };
 
-        const note = {
-          title: "Ma première note",
-          content: editor.getJSON(),
-          updatedAt: new Date(),
+          store.put(note, 1);
+
+          console.log("Note sauvegardée !");
         };
-
-        store.put(note, 1);
-
-        console.log("Note sauvegardée !");
-      };
+      }, 1000);
     },
   });
 
@@ -141,6 +145,7 @@ const App = () => {
       >
         Rétablir
       </button>
+
       <EditorContent editor={editor} className="border-2 m-4 rounded-sm" />
     </div>
   );
