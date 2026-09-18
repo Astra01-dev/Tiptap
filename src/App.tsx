@@ -1,11 +1,52 @@
+import { useEffect, useRef, useState } from "react";
+
 import { EditorContent, useEditor } from "@tiptap/react";
+
 import StarterKit from "@tiptap/starter-kit";
-import { useRef } from "react";
+
+import Link from "@tiptap/extension-link";
+
+import { Placeholder } from "@tiptap/extension-placeholder";
+
+import Highlight from "@tiptap/extension-highlight";
 
 const App = () => {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [boldActive, setBoldActive] = useState(false);
+  const [italicActive, setItalicActive] = useState(false);
+  const [strikeActive, setStrikeActive] = useState(false);
+  const [highlightActive, setHighlightActive] = useState(false);
+
+  const [h1Active, setH1Active] = useState(false);
+  const [h2Active, setH2Active] = useState(false);
+  const [h3Active, setH3Active] = useState(false);
+
+  const [bulletListActive, setBulletListActive] = useState(false);
+  const [orderedListActive, setOrderedListActive] = useState(false);
+
+  const [blockquoteActive, setBlockquoteActive] = useState(false);
+
+  const [codelineActivate, setCodelineActivate] = useState(false);
+  const [codeblockActivate, setCodeblockActivate] = useState(false);
+  useEffect(() => {
+    return () => {
+      clearTimeout(timer.current!);
+    };
+  }, []);
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+
+      Link,
+
+      Placeholder.configure({
+        placeholder: "Commencer à écrire...",
+      }),
+
+      Highlight,
+    ],
+
     content: `Aucune note`,
 
     onCreate: ({ editor }) => {
@@ -21,12 +62,6 @@ const App = () => {
         const requestNote = store.get(1);
 
         requestNote.onsuccess = () => {
-          console.log("Note récupérée :");
-          console.log(requestNote.result);
-
-          editor?.commands.setContent(requestNote.result.content);
-        };
-        requestNote.onsuccess = () => {
           const note = requestNote.result;
 
           if (note) {
@@ -34,6 +69,44 @@ const App = () => {
           }
         };
       };
+    },
+
+    onSelectionUpdate: ({ editor }) => {
+      setBoldActive(editor.isActive("bold"));
+
+      setItalicActive(editor.isActive("italic"));
+
+      setStrikeActive(editor.isActive("strike"));
+
+      setHighlightActive(editor.isActive("highlight"));
+
+      setH1Active(
+        editor.isActive("heading", {
+          level: 1,
+        }),
+      );
+
+      setH2Active(
+        editor.isActive("heading", {
+          level: 2,
+        }),
+      );
+
+      setH3Active(
+        editor.isActive("heading", {
+          level: 3,
+        }),
+      );
+
+      setBulletListActive(editor.isActive("bulletList"));
+
+      setOrderedListActive(editor.isActive("orderedList"));
+
+      setBlockquoteActive(editor.isActive("blockquote"));
+
+      setCodelineActivate(editor.isActive("code"));
+
+      setCodeblockActivate(editor.isActive("codeBlock"));
     },
 
     onUpdate: ({ editor }) => {
@@ -44,7 +117,9 @@ const App = () => {
 
         request.onsuccess = () => {
           const db = request.result;
+
           const transaction = db.transaction("notes", "readwrite");
+
           const store = transaction.objectStore("notes");
 
           const note = {
@@ -55,7 +130,7 @@ const App = () => {
 
           store.put(note, 1);
 
-          console.log("Note sauvegardée !");
+          console.log("💾 Note sauvegardée !");
         };
       }, 1000);
     },
@@ -66,7 +141,7 @@ const App = () => {
       <h1 className="text-2xl font-bold">Mon éditeur</h1>
 
       <button
-        className="btn btn-active"
+        className={boldActive ? "btn btn-secondary" : "btn"}
         onClick={() => {
           editor?.chain().focus().toggleBold().run();
         }}
@@ -75,7 +150,7 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={italicActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleItalic().run();
         }}
@@ -84,7 +159,25 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={strikeActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
+        onClick={() => {
+          editor?.chain().focus().toggleStrike().run();
+        }}
+      >
+        Barré
+      </button>
+
+      <button
+        className={highlightActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
+        onClick={() => {
+          editor?.chain().focus().toggleHighlight().run();
+        }}
+      >
+        Surligner
+      </button>
+
+      <button
+        className={h1Active ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleHeading({ level: 1 }).run();
         }}
@@ -93,7 +186,7 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={h2Active ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleHeading({ level: 2 }).run();
         }}
@@ -102,7 +195,7 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={h3Active ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleHeading({ level: 3 }).run();
         }}
@@ -111,7 +204,7 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={bulletListActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleBulletList().run();
         }}
@@ -120,12 +213,48 @@ const App = () => {
       </button>
 
       <button
-        className="mx-2 btn btn-active"
+        className={orderedListActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
         onClick={() => {
           editor?.chain().focus().toggleOrderedList().run();
         }}
       >
         OL
+      </button>
+
+      <button
+        className={blockquoteActive ? "mx-2 btn btn-secondary" : "mx-2 btn"}
+        onClick={() => {
+          editor?.chain().focus().toggleBlockquote().run();
+        }}
+      >
+        Citation
+      </button>
+
+      <button
+        className={codelineActivate ? "mx-2 btn btn-secondary" : "mx-2 btn"}
+        onClick={() => {
+          editor?.chain().focus().toggleCode().run();
+        }}
+      >
+        CodeLine
+      </button>
+
+      <button
+        className={codeblockActivate ? "mx-2 btn btn-secondary" : "mx-2 btn"}
+        onClick={() => {
+          editor?.chain().focus().toggleCodeBlock().run();
+        }}
+      >
+        CodeBlock
+      </button>
+
+      <button
+        className="mx-2 btn"
+        onClick={() => {
+          editor?.chain().focus().setHorizontalRule().run();
+        }}
+      >
+        Ligne
       </button>
 
       <button
@@ -144,6 +273,30 @@ const App = () => {
         }}
       >
         Rétablir
+      </button>
+
+      <button
+        className="mx-2 btn btn-active"
+        onClick={() => {
+          editor
+            ?.chain()
+            .focus()
+            .setLink({
+              href: "https://youtube.com",
+            })
+            .run();
+        }}
+      >
+        Lien
+      </button>
+
+      <button
+        className="mx-2 btn btn-active"
+        onClick={() => {
+          editor?.chain().focus().unsetLink().run();
+        }}
+      >
+        retrait
       </button>
 
       <EditorContent editor={editor} className="border-2 m-4 rounded-sm" />
