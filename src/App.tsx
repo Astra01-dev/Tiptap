@@ -4,78 +4,59 @@ import StarterKit from "@tiptap/starter-kit";
 const App = () => {
   const editor = useEditor({
     extensions: [StarterKit],
-
-    content: `
-      <p>Premiere note</p>
-      <p>Aujourd'hui, j'ai commencé mon projet CosyNote.</p>
-    `,
+    content: `Aucune note`,
 
     onCreate: ({ editor }) => {
-      console.log("Tiptap est prêt !");
-      console.log(editor.getJSON());
+      const request = indexedDB.open("CosyNoteDB", 1);
+
+      request.onsuccess = () => {
+        const db = request.result;
+
+        const transaction = db.transaction("notes", "readonly");
+
+        const store = transaction.objectStore("notes");
+
+        const requestNote = store.get(1);
+
+        requestNote.onsuccess = () => {
+          console.log("Note récupérée :");
+          console.log(requestNote.result);
+
+          editor?.commands.setContent(requestNote.result.content);
+        };
+        requestNote.onsuccess = () => {
+          const note = requestNote.result;
+
+          if (note) {
+            editor.commands.setContent(note.content);
+          }
+        };
+      };
     },
 
     onUpdate: ({ editor }) => {
-      console.log("Le contenu a changé :");
-      console.log(editor.getJSON());
+      const request = indexedDB.open("CosyNoteDB", 1);
+
+      request.onsuccess = () => {
+        const db = request.result;
+
+        const transaction = db.transaction("notes", "readwrite");
+
+        const store = transaction.objectStore("notes");
+
+        const note = {
+          title: "Ma première note",
+          content: editor.getJSON(),
+          updatedAt: new Date(),
+        };
+
+        store.put(note, 1);
+
+        console.log("Note sauvegardée !");
+      };
     },
   });
 
-  const creerBase = () => {
-    const request = indexedDB.open("CosyNoteDB", 1);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-
-      db.createObjectStore("notes");
-
-      console.log("Base CosyNoteDB créée !");
-    };
-
-    request.onsuccess = () => {
-      console.log("Connexion à CosyNoteDB réussie !");
-    };
-
-    request.onerror = () => {
-      console.log("Erreur avec IndexedDB");
-    };
-  };
-
-  const sauvegarderNote = () => {
-    const request = indexedDB.open("CosyNoteDB", 1);
-
-    request.onsuccess = () => {
-      const db = request.result;
-
-      const transaction = db.transaction("notes", "readwrite");
-
-      const store = transaction.objectStore("notes");
-
-      const note = {
-        title: "Ma première note",
-        content: "Bonjour CosyNote !",
-        updatedAt: new Date(),
-      };
-
-      store.put(note, 1);
-
-      console.log("Note sauvegardée !");
-    };
-  };
-  const chargerNote = () => {
-    const request = indexedDB.open("CosyNoteDB", 1);
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction("notes", "readonly");
-      const store = transaction.objectStore("notes");
-      const requestNote = store.get(1);
-      requestNote.onsuccess = () => {
-        console.log("Note récupérée :");
-        console.log(requestNote.result);
-      };
-    };
-  };
-  const mettreEditeur = () => {};
   return (
     <div>
       <h1 className="text-2xl font-bold">Mon éditeur</h1>
@@ -159,17 +140,6 @@ const App = () => {
         }}
       >
         Rétablir
-      </button>
-
-      <button className="mx-2 btn btn-active" onClick={creerBase}>
-        Créer la base
-      </button>
-
-      <button className="mx-2 btn btn-active" onClick={sauvegarderNote}>
-        Sauvegarder
-      </button>
-      <button className="mx-2 btn btn-active" onClick={chargerNote}>
-        Charger
       </button>
       <EditorContent editor={editor} className="border-2 m-4 rounded-sm" />
     </div>
